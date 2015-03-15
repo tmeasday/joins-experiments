@@ -90,7 +90,7 @@ var SubscriptionTree = function(parent) {
 // XXX: could take fields as an argument to allow only responding to changes on
 //   relevant fields
   self.forEach = function(cursor) {
-    cursor.observeChanges({
+    var handle = cursor.observeChanges({
       added: function(id, doc) {
         // XXX: could do the mergeboxing at this level?
         //   i.e do something if children[id] already exists.
@@ -99,8 +99,9 @@ var SubscriptionTree = function(parent) {
       }, 
       changed: function(id, mod) {
         // check mod applies
-        // fetch doc -- TODO: can we get doc from the observer? isn't it caching?
         var childSub = children[id];
+        // TODO: shoudl there be an official API to do this?
+        var doc = handle._multiplexer._cache.docs.get(id);
         fn.call(childSub, doc);
       },
       removed: function(id) {
