@@ -35,7 +35,7 @@ It's very natural to do this with a shell of containing subscriptions, each of w
 
 ### Problem 2: Overlapping cursors
 
-Currently, you cannot publish two cursors from a single subscription. This is more fundamentally because you cannot call `this.added()` twice on the same document. Consider the following:
+Currently, you cannot publish two cursors over the same collection from a single subscription. This is more fundamentally because you cannot call `this.added()` twice on the same document. Consider the following:
 
   1. First cursor calls `this.added()` with one set of fields
   2. Second cursor calls `this.added()` with a second set of fields
