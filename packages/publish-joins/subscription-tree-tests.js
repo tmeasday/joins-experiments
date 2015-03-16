@@ -6,11 +6,12 @@ if (Meteor.isServer) {
   var parentId = Random.id();
   Children.remove({});
   Grandchildren.remove({});
-  var addChild = function() {
-    var childId = Children.insert({parentId: parentId});
-    _.times(10, function() {
-      Grandchildren.insert({childId: childId});
+  var addChild = function(i) {
+    var childId = Children.insert({parentId: parentId, index: i});
+    _.times(10, function(j) {
+      Grandchildren.insert({childId: childId, index: j});
     });
+    return childId;
   }
   _.times(10, addChild);
   
@@ -36,7 +37,24 @@ if (Meteor.isServer) {
     'remove-child': function(childId) {
       Children.remove(childId);
       // NOTE: don't remove grandchildren
+    },
+    'remove-grandchildren': function(childId) {
+      Grandchildren.remove({childId: childId});
     }
+  });
+  
+  Meteor.publish('overlapping-grandchildren', function() {
+    var tree = new SubscriptionTree(this);
+    
+    tree.publishChild(function() {
+      return Grandchildren.find({index: 0});
+    });
+
+    tree.publishChild(function() {
+      return Grandchildren.find({index: {$lt: 2}});
+    });
+
+    tree.ready();
   });
 
 } else {
@@ -49,19 +67,21 @@ if (Meteor.isServer) {
   
   testAsyncMulti("subscription-tree - basic data", [
     function (test, expect) {
-      Meteor.subscribe("children-and-grandchildren", {
+      this.handle = Meteor.subscribe("children-and-grandchildren", {
         onReady: expect(function () {
           test.equal(Children.find().count(), 10);
           test.equal(Grandchildren.find().count(), 100);
         }),
         onError: fail(test)
       });
+    }, function() {
+      this.handle.stop()
     }
   ]);
   
   testAsyncMulti("subscription-tree - add and remove data", [
     function (test, expect) {
-      Meteor.subscribe("children-and-grandchildren", {
+      this.handle = Meteor.subscribe("children-and-grandchildren", {
         onReady: expect(function () {
           test.equal(Children.find().count(), 10);
           test.equal(Grandchildren.find().count(), 100);
@@ -70,20 +90,58 @@ if (Meteor.isServer) {
       });
     },
     function(test, expect) {
-      Meteor.call('add-child-and-grandchildren', expect(function(error) {
+      var self = this;
+      Meteor.call('add-child-and-grandchildren', expect(function(error, childId) {
         test.isUndefined(error);
         test.equal(Children.find().count(), 11);
         test.equal(Grandchildren.find().count(), 110);
+        self.childId = childId;
       }));
     },
     function(test, expect) {
-      var childId = Children.findOne()._id;
-      Meteor.call('remove-child', childId, expect(function(error) {
+      var self = this;
+      Meteor.call('remove-child', self.childId, expect(function(error) {
         test.isUndefined(error);
-        test.equal(Children.find(childId).count(), 0);
+        test.equal(Children.find(self.childId).count(), 0)
         test.equal(Children.find().count(), 10);
         test.equal(Grandchildren.find().count(), 100);
       }));
+    }, 
+    function(test, expect) {
+      Meteor.call('remove-grandchildren', this.childId, expect(function() {}));
+    }, 
+    function() {
+      this.handle.stop()
+    }
+  ]);
+
+  testAsyncMulti("subscription-tree - overlapping cursors", [
+    function (test, expect) {
+      this.handle = Meteor.subscribe("overlapping-grandchildren", {
+        onReady: expect(function () {
+          test.equal(Grandchildren.find().count(), 20);
+        }),
+        onError: fail(test)
+      });
+    },
+    function(test, expect) {
+      var self = this;
+      Meteor.call('add-child-and-grandchildren', self.childId, expect(function(error, childId) {
+        test.isUndefined(error);
+        test.equal(Grandchildren.find().count(), 22);
+        self.childId = childId;
+      }));
+    }, 
+    function(test, expect) {
+      Meteor.call('remove-child', this.childId, expect(function() {}));
+    }, 
+    function(test, expect) {
+      Meteor.call('remove-grandchildren', this.childId, expect(function() {
+        test.equal(Grandchildren.find().count(), 20);
+      }));
+    }, 
+    function() {
+      this.handle.stop()
     }
   ]);
   
