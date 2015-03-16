@@ -21,11 +21,11 @@ Comments.helpers({
 
 Helpfuls = new Mongo.Collection('helpfuls');
 
-if (Flips.find().count() === 0) {
+if (Meteor.isServer && Flips.find().count() === 0) {
   _.times(10, function() {
     var flipId = Flips.insert({name: Random.id()});
     
-    _.times(10, function(reponseNo) {
+    _.times(10, function(responseNo) {
       var responseId = Responses.insert({
         flipId: flipId,
         name: 'response ' + responseNo
