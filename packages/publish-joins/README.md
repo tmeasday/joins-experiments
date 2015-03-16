@@ -45,7 +45,7 @@ How is the merge box supposed to know (a) whether or not to remove the document 
 
 ### Solution: Subscription Trees
 
-The answer is to allow subscriptions to have anonymous child subscriptions that *set up their own `_subscriptionId`s*. Then if the subscriptions follow some simple rules around readiness and stopping, we solve the two problems above, very naturally.
+The answer is to allow subscriptions to have anonymous child subscriptions that *have their own `_subscriptionHandle`s*. Then if the subscriptions follow some simple rules around readiness and stopping, we solve the two problems above, very naturally.
 
 The rules are:
   - a parent sub kills it's children, like computations
