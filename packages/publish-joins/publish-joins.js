@@ -1,5 +1,4 @@
 PublishJoins = function(sub, cursor, joins) {
-  // FIXME: only necessary if sub isn't a tree
   var tree = new SubscriptionTree(sub);
   tree.publish(function() {
     return publisher(this, cursor, joins);
