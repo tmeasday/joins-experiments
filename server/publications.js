@@ -1,5 +1,5 @@
-Meteor.publish('flip', function(flipId) {
-  PublishJoins(this, Flips.find(flipId), {
+Meteor.publish('flips', function() {
+  return PublishJoins(this, Flips.find(), {
     responses: {
       comments: {
         helpfuls: {}

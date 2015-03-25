@@ -14,7 +14,7 @@ Package.onUse(function(api) {
   api.addFiles('publish-joins.js', 'server');
   
   // for now, make test only (actually PR)
-  api.export('SubscriptionTree', 'server');
+  api.export('subscriptionForEach', 'server', {testOnly: true});
   api.export('PublishJoins', 'server');
 });
 

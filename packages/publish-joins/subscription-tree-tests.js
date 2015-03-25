@@ -16,20 +16,16 @@ if (Meteor.isServer) {
   _.times(10, addChild);
   
   Meteor.publish('children-and-grandchildren', function() {
-    var tree = new SubscriptionTree(this);
+    // ordinarily you'd pass parentId in of course.
+    var childCursor = Children.find({parentId: parentId});
     
-    tree.publish(function() {
-      // ordinarily you'd pass parentId in of course.
-      var childCursor = Children.find({parentId: parentId});
-      
-      // create a new child subscription for each child
-      this.forEach(childCursor, function(child) {
-        return Grandchildren.find({childId: child._id});
-      });
-      
-      // also publish the children at this level
-      return childCursor;
+    // create a new child subscription for each child
+    subscriptionForEach(this, childCursor, function(child) {
+      return Grandchildren.find({childId: child._id});
     });
+    
+    // also publish the children at this level
+    return childCursor;
   });
   
   Meteor.methods({
@@ -44,17 +40,15 @@ if (Meteor.isServer) {
   });
   
   Meteor.publish('overlapping-grandchildren', function() {
-    var tree = new SubscriptionTree(this);
-    
-    tree.publishChild(function() {
+    this.publishChild(function() {
       return Grandchildren.find({index: 0});
     });
 
-    tree.publishChild(function() {
+    this.publishChild(function() {
       return Grandchildren.find({index: {$lt: 2}});
     });
 
-    tree.ready();
+    this.ready();
   });
 
 } else {
