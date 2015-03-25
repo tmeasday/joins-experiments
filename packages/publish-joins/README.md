@@ -48,11 +48,11 @@ How is the merge box supposed to know (a) whether or not to remove the document 
 The answer is to allow subscriptions to have anonymous child subscriptions that *have their own `_subscriptionHandle`s*. Then if the subscriptions follow some simple rules around readiness and stopping, we solve the two problems above, very naturally.
 
 The rules are:
-  - a parent sub kills it's children, like computations
+  - a parent sub stops its children when stopped, like computations
   - a parent sub is only ready when all children + itself are ready.
 
 ### Easter egg: `SubscriptionTree.prototype.forEach`
 
 With the above in place, we can write a straightforward function that reactively (using the observe API), sets up and tears down a child subscription for each document matching a cursor. 
 
-Armed with that function, implementing publish-joins (or many other reactive publication APIs) is a trivial 17 lines of code.
+Armed with that function, implementing publish-joins (or many other reactive publication APIs) is a trivial 17 lines of code (10 if trees are built into core subscriptions).
